@@ -8,7 +8,7 @@ const nextConfig = {
     domains: ['source.unsplash.com', 'ui-avatars.com', 'images.unsplash.com', 'via.placeholder.com']
   },
   env: {
-    NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000',
+    NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL || 'https://wishshare.onrender.com',
   },
 };
 
