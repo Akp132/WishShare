@@ -120,23 +120,33 @@ app.use((req, res) => {
 
 // Socket.IO connection handling
 io.on('connection', (socket) => {
-  console.log('User connected:', socket.id);
+  console.log('✅ User connected:', socket.id);
 
   // Join wishlist room
   socket.on('join_wishlist', (wishlistId) => {
     socket.join(`wishlist_${wishlistId}`);
-    console.log(`User ${socket.id} joined wishlist room: ${wishlistId}`);
+    console.log(`🚀 User ${socket.id} joined wishlist room: ${wishlistId}`);
   });
 
   // Leave wishlist room
   socket.on('leave_wishlist', (wishlistId) => {
     socket.leave(`wishlist_${wishlistId}`);
-    console.log(`User ${socket.id} left wishlist room: ${wishlistId}`);
+    console.log(`👋 User ${socket.id} left wishlist room: ${wishlistId}`);
+  });
+
+  // Handle typing indicator for comments
+  socket.on('typing_comment', (data) => {
+    console.log('⌨️ User typing comment:', data);
+    socket.to(`wishlist_${data.wishlistId}`).emit('user_typing_comment', {
+      itemId: data.itemId,
+      userId: data.userId,
+      isTyping: data.isTyping
+    });
   });
 
   // Handle disconnect
   socket.on('disconnect', () => {
-    console.log('User disconnected:', socket.id);
+    console.log('❌ User disconnected:', socket.id);
   });
 });
 

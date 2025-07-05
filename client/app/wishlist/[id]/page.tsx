@@ -33,7 +33,10 @@ import { Wishlist, Item } from '@/lib/types';
 import { toast } from 'sonner';
 import { formatDistanceToNow } from 'date-fns';
 import AddItemDialog from '@/components/AddItemDialog';
+import CommentSection from '@/components/CommentSection';
+import ReactionBar from '@/components/ReactionBar';
 import EditItemDialog from '@/components/EditItemDialog';
+import socketManager from '@/lib/socket';
 
 export default function WishlistDetail() {
   const { user, isAuthenticated, isLoading } = useAuth();
@@ -52,7 +55,7 @@ export default function WishlistDetail() {
   const wishlistId = params.id as string;
 
   useEffect(() => {
-    if (!isLoading && !isAuthenticated) {
+    if (!isAuthenticated && !isLoading) {
       router.push('/login');
     }
   }, [isAuthenticated, isLoading, router]);
@@ -63,6 +66,80 @@ export default function WishlistDetail() {
       fetchItems();
     }
   }, [isAuthenticated, wishlistId]);
+
+  // Set up real-time socket connection
+  useEffect(() => {
+    if (!wishlist || !isAuthenticated) return;
+
+    // Connect to socket and join wishlist room
+    const socket = socketManager.connect();
+    if (socket) {
+      socketManager.joinWishlist(wishlistId);
+
+      // Listen for comment events
+      const handleCommentAdded = (data: { itemId: string; comment: any }) => {
+        console.log('📝 Real-time comment added:', data);
+        setItems(prev => 
+          prev.map(item => 
+            item._id === data.itemId 
+              ? { ...item, comments: [...(item.comments || []), data.comment] }
+              : item
+          )
+        );
+      };
+
+      const handleCommentDeleted = (data: { itemId: string; commentId: string }) => {
+        console.log('🗑️ Real-time comment deleted:', data);
+        setItems(prev => 
+          prev.map(item => 
+            item._id === data.itemId 
+              ? { ...item, comments: (item.comments || []).filter(c => c._id !== data.commentId) }
+              : item
+          )
+        );
+      };
+
+      // Listen for reaction events
+      const handleReactionUpdated = (data: { itemId: string; reaction: any }) => {
+        console.log('😍 Real-time reaction updated:', data);
+        setItems(prev => 
+          prev.map(item => {
+            if (item._id === data.itemId) {
+              const existingReactions = (item.reactions || []).filter(r => r.user._id !== data.reaction.user._id);
+              return { ...item, reactions: [...existingReactions, data.reaction] };
+            }
+            return item;
+          })
+        );
+      };
+
+      const handleReactionRemoved = (data: { itemId: string; userId: string }) => {
+        console.log('❌ Real-time reaction removed:', data);
+        setItems(prev => 
+          prev.map(item => 
+            item._id === data.itemId 
+              ? { ...item, reactions: (item.reactions || []).filter(r => r.user._id !== data.userId) }
+              : item
+          )
+        );
+      };
+
+      // Register event listeners
+      socketManager.onCommentAdded(handleCommentAdded);
+      socketManager.onCommentDeleted(handleCommentDeleted);
+      socketManager.onReactionUpdated(handleReactionUpdated);
+      socketManager.onReactionRemoved(handleReactionRemoved);
+
+      // Cleanup function
+      return () => {
+        socketManager.offCommentAdded(handleCommentAdded);
+        socketManager.offCommentDeleted(handleCommentDeleted);
+        socketManager.offReactionUpdated(handleReactionUpdated);
+        socketManager.offReactionRemoved(handleReactionRemoved);
+        socketManager.leaveWishlist(wishlistId);
+      };
+    }
+  }, [wishlist, wishlistId, isAuthenticated]);
 
   const fetchWishlist = async () => {
     try {
@@ -473,6 +550,30 @@ export default function WishlistDetail() {
                         </Button>
                       )}
                     </div>
+
+                    {/* Reactions */}
+                    <ReactionBar
+                      itemId={item._id}
+                      wishlistId={wishlistId}
+                      reactions={item.reactions || []}
+                      onReactionsUpdate={(reactions: any) => {
+                        setItems(prev => prev.map(i => 
+                          i._id === item._id ? { ...i, reactions } : i
+                        ));
+                      }}
+                    />
+
+                    {/* Comments */}
+                    <CommentSection
+                      itemId={item._id}
+                      wishlistId={wishlistId}
+                      comments={item.comments || []}
+                      onCommentsUpdate={(comments: any) => {
+                        setItems(prev => prev.map(i => 
+                          i._id === item._id ? { ...i, comments } : i
+                        ));
+                      }}
+                    />
                   </div>
                 </CardContent>
               </Card>

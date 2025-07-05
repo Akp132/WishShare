@@ -95,6 +95,20 @@ export const itemsAPI = {
   
   claim: (wishlistId: string, itemId: string) =>
     api.post(`/wishlists/${wishlistId}/items/${itemId}/claim`),
+
+  // Comments API
+  addComment: (wishlistId: string, itemId: string, data: { text: string }) =>
+    api.post(`/wishlists/${wishlistId}/items/${itemId}/comments`, data),
+
+  deleteComment: (wishlistId: string, itemId: string, commentId: string) =>
+    api.delete(`/wishlists/${wishlistId}/items/${itemId}/comments/${commentId}`),
+
+  // Reactions API
+  addReaction: (wishlistId: string, itemId: string, data: { emoji: string }) =>
+    api.post(`/wishlists/${wishlistId}/items/${itemId}/reactions`, data),
+
+  removeReaction: (wishlistId: string, itemId: string) =>
+    api.delete(`/wishlists/${wishlistId}/items/${itemId}/reactions`),
 };
 
 export default api;

@@ -1,6 +1,6 @@
 import { io, Socket } from 'socket.io-client';
 
-const SOCKET_URL = process.env.NEXT_PUBLIC_SOCKET_URL || 'https://wishshare.onrender.com';
+const SOCKET_URL = process.env.NEXT_PUBLIC_SOCKET_URL || 'http://localhost:5001';
 
 class SocketManager {
   private socket: Socket | null = null;
@@ -21,12 +21,12 @@ class SocketManager {
     });
 
     this.socket.on('connect', () => {
-      console.log('Connected to server');
+      console.log('✅ Connected to server');
       this.reconnectAttempts = 0;
     });
 
     this.socket.on('disconnect', () => {
-      console.log('Disconnected from server');
+      console.log('❌ Disconnected from server');
     });
 
     this.socket.on('reconnect_attempt', (attempt) => {
@@ -53,12 +53,14 @@ class SocketManager {
 
   joinWishlist(wishlistId: string) {
     if (this.socket) {
+      console.log('🚀 Joining wishlist room:', wishlistId);
       this.socket.emit('join_wishlist', wishlistId);
     }
   }
 
   leaveWishlist(wishlistId: string) {
     if (this.socket) {
+      console.log('👋 Leaving wishlist room:', wishlistId);
       this.socket.emit('leave_wishlist', wishlistId);
     }
   }
@@ -97,6 +99,79 @@ class SocketManager {
   onMemberInvited(callback: (data: any) => void) {
     if (this.socket) {
       this.socket.on('member_invited', callback);
+    }
+  }
+
+  // Comments and Reactions
+  onCommentAdded(callback: (data: any) => void) {
+    if (this.socket) {
+      console.log('🔵 Listening for comment_added events');
+      this.socket.on('comment_added', callback);
+    }
+  }
+
+  onCommentDeleted(callback: (data: any) => void) {
+    if (this.socket) {
+      console.log('🔵 Listening for comment_deleted events');
+      this.socket.on('comment_deleted', callback);
+    }
+  }
+
+  onReactionUpdated(callback: (data: any) => void) {
+    if (this.socket) {
+      console.log('🔵 Listening for reaction_updated events');
+      this.socket.on('reaction_updated', callback);
+    }
+  }
+
+  onReactionRemoved(callback: (data: any) => void) {
+    if (this.socket) {
+      console.log('🔵 Listening for reaction_removed events');
+      this.socket.on('reaction_removed', callback);
+    }
+  }
+
+  onUserTypingComment(callback: (data: any) => void) {
+    if (this.socket) {
+      this.socket.on('user_typing_comment', callback);
+    }
+  }
+
+  // Emit typing events
+  emitTypingComment(wishlistId: string, itemId: string, userId: string, isTyping: boolean) {
+    if (this.socket) {
+      this.socket.emit('typing_comment', { wishlistId, itemId, userId, isTyping });
+    }
+  }
+
+  // Remove specific event listeners
+  offCommentAdded(callback: any) {
+    if (this.socket) {
+      this.socket.off('comment_added', callback);
+    }
+  }
+
+  offCommentDeleted(callback: any) {
+    if (this.socket) {
+      this.socket.off('comment_deleted', callback);
+    }
+  }
+
+  offReactionUpdated(callback: any) {
+    if (this.socket) {
+      this.socket.off('reaction_updated', callback);
+    }
+  }
+
+  offReactionRemoved(callback: any) {
+    if (this.socket) {
+      this.socket.off('reaction_removed', callback);
+    }
+  }
+
+  offUserTypingComment(callback: any) {
+    if (this.socket) {
+      this.socket.off('user_typing_comment', callback);
     }
   }
 

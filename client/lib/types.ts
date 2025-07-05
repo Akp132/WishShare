@@ -42,8 +42,24 @@ export interface Item {
   claimedBy?: User;
   addedBy: User;
   editedBy?: User;
+  comments: Comment[];
+  reactions: Reaction[];
   createdAt: string;
   updatedAt: string;
+}
+
+export interface Comment {
+  _id: string;
+  user: User;
+  text: string;
+  createdAt: string;
+}
+
+export interface Reaction {
+  _id: string;
+  user: User;
+  emoji: string;
+  createdAt: string;
 }
 
 export interface AuthState {
