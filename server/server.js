@@ -15,10 +15,17 @@ const itemRoutes = require('./routes/items');
 const app = express();
 const server = http.createServer(app);
 
+// Trust proxy for Render deployment
+app.set('trust proxy', 1);
+
 // Socket.IO setup
 const io = socketIo(server, {
   cors: {
-    origin: process.env.CLIENT_URL || "http://localhost:3000",
+    origin: [
+      'http://localhost:3000',
+      'https://wish-share-i9lipqggz-akshays-projects-7b746b9a.vercel.app',
+      process.env.CLIENT_URL
+    ],
     methods: ["GET", "POST"]
   }
 });
@@ -33,13 +40,20 @@ app.use(helmet());
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
   max: 100, // limit each IP to 100 requests per windowMs
-  message: 'Too many requests from this IP, please try again later.'
+  message: 'Too many requests from this IP, please try again later.',
+  standardHeaders: true,
+  legacyHeaders: false,
+  trustProxy: true
 });
 app.use('/api/', limiter);
 
 // CORS
 app.use(cors({
-  origin: process.env.CLIENT_URL || "http://localhost:3000",
+  origin: [
+    'http://localhost:3000',
+    'https://wish-share-i9lipqggz-akshays-projects-7b746b9a.vercel.app',
+    process.env.CLIENT_URL
+  ],
   credentials: true
 }));
 
