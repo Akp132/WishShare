@@ -23,6 +23,7 @@ const io = socketIo(server, {
   cors: {
     origin: [
       'http://localhost:3000',
+      'https://wish-share.vercel.app',
       'https://wish-share-i9lipqggz-akshays-projects-7b746b9a.vercel.app',
       process.env.CLIENT_URL
     ],
@@ -51,10 +52,13 @@ app.use('/api/', limiter);
 app.use(cors({
   origin: [
     'http://localhost:3000',
+    'https://wish-share.vercel.app',
     'https://wish-share-i9lipqggz-akshays-projects-7b746b9a.vercel.app',
     process.env.CLIENT_URL
   ],
-  credentials: true
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
 }));
 
 // Body parsing middleware
@@ -69,10 +73,19 @@ mongoose.connect(process.env.MONGO_URI || 'mongodb://localhost:27017/wishlist-ap
 .then(() => console.log('✅ Connected to MongoDB'))
 .catch(err => console.error('❌ MongoDB connection error:', err));
 
+// Add debug logging for requests
+app.use('/api', (req, res, next) => {
+  console.log(`📝 API Request: ${req.method} ${req.originalUrl}`);
+  console.log(`📍 Origin: ${req.headers.origin}`);
+  next();
+});
+
 // Routes
+console.log('🔗 Setting up routes...');
 app.use('/api/auth', authRoutes);
 app.use('/api/wishlists', wishlistRoutes);
 app.use('/api/wishlists', itemRoutes);
+console.log('✅ Routes setup complete');
 
 // Health check endpoint
 app.get('/api/health', (req, res) => {
@@ -80,6 +93,14 @@ app.get('/api/health', (req, res) => {
     status: 'OK',
     timestamp: new Date().toISOString(),
     uptime: process.uptime()
+  });
+});
+
+// Test auth endpoint
+app.get('/api/auth/test', (req, res) => {
+  res.json({
+    message: 'Auth routes working!',
+    timestamp: new Date().toISOString()
   });
 });
 
